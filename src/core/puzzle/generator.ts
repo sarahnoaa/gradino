@@ -18,7 +18,7 @@ export interface Puzzle {
   solutionOrder: string[];
 }
 
-// Generate the first puzzle: Cool Blue → Cool Yellow with 7 total tiles
+// Generate the first puzzle: Cool Blue → Cool Yellow with 9 total tiles (8 gradations)
 export const generateFirstPuzzle = (): Puzzle => {
   const startPrimary = getPrimaryById('CB'); // Cool Blue
   const endPrimary = getPrimaryById('CY'); // Cool Yellow
@@ -28,7 +28,7 @@ export const generateFirstPuzzle = (): Puzzle => {
   }
 
   // Generate perceptually uniform gradient using culori's OKLab interpolator
-  const gradient = generateColorGradient(startPrimary.rgb, endPrimary.rgb, 6); // 6 steps gives us 7 colors total
+  const gradient = generateColorGradient(startPrimary.rgb, endPrimary.rgb, 8); // 8 steps gives us 9 colors total
   
   console.log('Generated gradient:', gradient);
 
@@ -71,7 +71,7 @@ export const generateFirstPuzzle = (): Puzzle => {
   ];
 
   return {
-    slots: 7,
+    slots: 9,
     anchors: {
       start: startTile,
       end: endTile
