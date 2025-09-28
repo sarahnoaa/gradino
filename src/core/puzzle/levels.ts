@@ -28,6 +28,41 @@ export const PUZZLE_DEFINITIONS: Record<number, PuzzleDefinition> = {
       { gradations: 3, colors: ['WR', 'CB'] }  // Column 2: Warm Red → Cool Blue (5 total: 3 intermediate + 2 anchors)
     ]
   },
+  8: { 
+    type: 'multi', 
+    columns: [
+      { gradations: 3, colors: ['WY', 'WR'] }, // Column 1: Warm Yellow → Warm Red (5 total: 3 intermediate + 2 anchors)
+      { gradations: 3, colors: ['CY', 'CR'] }  // Column 2: Cool Yellow → Cool Red (5 total: 3 intermediate + 2 anchors)
+    ]
+  },
+  9: { 
+    type: 'multi', 
+    columns: [
+      { gradations: 3, colors: ['CB', 'CY'] }, // Column 1: Cool Blue → Cool Yellow (5 total: 3 intermediate + 2 anchors)
+      { gradations: 3, colors: ['WB', 'WY'] }  // Column 2: Warm Blue → Warm Yellow (5 total: 3 intermediate + 2 anchors)
+    ]
+  },
+  10: { 
+    type: 'multi', 
+    columns: [
+      { gradations: 3, colors: ['WR', 'WB'] }, // Column 1: Warm Red → Warm Blue (5 total: 3 intermediate + 2 anchors)
+      { gradations: 3, colors: ['CR', 'CB'] }  // Column 2: Cool Red → Cool Blue (5 total: 3 intermediate + 2 anchors)
+    ]
+  },
+  11: { 
+    type: 'multi', 
+    columns: [
+      { gradations: 3, colors: ['CY', 'WR'] }, // Column 1: Cool Yellow → Warm Red (5 total: 3 intermediate + 2 anchors)
+      { gradations: 3, colors: ['WY', 'CR'] }  // Column 2: Warm Yellow → Cool Red (5 total: 3 intermediate + 2 anchors)
+    ]
+  },
+  12: { 
+    type: 'multi', 
+    columns: [
+      { gradations: 3, colors: ['CB', 'WY'] }, // Column 1: Cool Blue → Warm Yellow (5 total: 3 intermediate + 2 anchors)
+      { gradations: 3, colors: ['WB', 'CY'] }  // Column 2: Warm Blue → Cool Yellow (5 total: 3 intermediate + 2 anchors)
+    ]
+  },
 };
 
 export const TOTAL_LEVELS = Object.keys(PUZZLE_DEFINITIONS).length;

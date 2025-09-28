@@ -125,9 +125,11 @@ const styles = StyleSheet.create({
   multiColumnContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   column: {
     flexDirection: 'column',
     alignItems: 'center',
+    marginHorizontal: 20, // Add spacing between columns
   },
 });
