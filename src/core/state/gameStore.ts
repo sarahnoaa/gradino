@@ -5,6 +5,7 @@ import { TOTAL_LEVELS } from '../puzzle/levels';
 interface GameState {
   currentPuzzle: Puzzle | null;
   placedTiles: (Tile | null)[][]; // Array of columns, each with placed tiles
+  grid: (Tile | null)[][]; // 2D grid for connected grid puzzles
   trayTiles: Tile[];
   isComplete: boolean;
   moves: number;
@@ -15,7 +16,9 @@ interface GameState {
   setLevel: (level: number) => void;
   nextLevel: () => void;
   placeTile: (tile: Tile, columnIndex: number, slotIndex: number) => void;
+  placeTileInGrid: (tile: Tile, columnIndex: number, rowIndex: number) => void;
   removeTile: (columnIndex: number, slotIndex: number) => void;
+  removeTileFromGrid: (columnIndex: number, rowIndex: number) => void;
   checkCompletion: () => void;
   resetPuzzle: () => void;
 }
@@ -23,6 +26,7 @@ interface GameState {
 export const useGameStore = create<GameState>((set, get) => ({
   currentPuzzle: null,
   placedTiles: [],
+  grid: [],
   trayTiles: [],
   isComplete: false,
   moves: 0,
@@ -54,6 +58,17 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({
         currentPuzzle: puzzle,
         placedTiles: [initialPlacedTiles], // Single column in array
+        grid: [],
+        trayTiles: [...puzzle.tiles],
+        isComplete: false,
+        moves: 0
+      });
+    } else if (puzzle.type === 'connected-grid') {
+      // Connected grid puzzle
+      set({
+        currentPuzzle: puzzle,
+        placedTiles: [],
+        grid: puzzle.grid,
         trayTiles: [...puzzle.tiles],
         isComplete: false,
         moves: 0
@@ -71,6 +86,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({
         currentPuzzle: puzzle,
         placedTiles: initialPlacedTiles,
+        grid: [],
         trayTiles: [...puzzle.tiles],
         isComplete: false,
         moves: 0
@@ -174,6 +190,57 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
+  placeTileInGrid: (tile: Tile, columnIndex: number, rowIndex: number) => {
+    const state = get();
+    if (!state.currentPuzzle || state.isComplete) return;
+    
+    const newGrid = state.grid.map(col => [...col]);
+    const newTrayTiles = [...state.trayTiles];
+    
+    // If there's already a tile in this slot, return it to tray
+    if (newGrid[columnIndex][rowIndex]) {
+      newTrayTiles.push(newGrid[columnIndex][rowIndex]!);
+    }
+    
+    // Place the new tile
+    newGrid[columnIndex][rowIndex] = tile;
+    
+    // Remove from tray
+    const tileIndex = newTrayTiles.findIndex(t => t.id === tile.id);
+    if (tileIndex !== -1) {
+      newTrayTiles.splice(tileIndex, 1);
+    }
+    
+    set({
+      grid: newGrid,
+      trayTiles: newTrayTiles,
+      moves: state.moves + 1
+    });
+    
+    // Check completion after placing
+    get().checkCompletion();
+  },
+
+  removeTileFromGrid: (columnIndex: number, rowIndex: number) => {
+    const state = get();
+    if (!state.currentPuzzle || state.isComplete) return;
+    
+    const tile = state.grid[columnIndex][rowIndex];
+    if (!tile) return;
+    
+    const newGrid = state.grid.map(col => [...col]);
+    const newTrayTiles = [...state.trayTiles];
+    
+    newGrid[columnIndex][rowIndex] = null;
+    newTrayTiles.push(tile);
+    
+    set({
+      grid: newGrid,
+      trayTiles: newTrayTiles,
+      moves: state.moves + 1
+    });
+  },
+
   checkCompletion: () => {
     const state = get();
     if (!state.currentPuzzle) return;
@@ -220,6 +287,29 @@ export const useGameStore = create<GameState>((set, get) => ({
       
       if (isCorrect) {
         console.log('THREE-ANCHOR PUZZLE COMPLETED! Setting isComplete to true');
+        set({ isComplete: true });
+      }
+    } else if (state.currentPuzzle.type === 'connected-grid') {
+      // Connected grid completion check
+      const puzzle = state.currentPuzzle;
+      
+      // Check if all slots are filled
+      const allFilled = puzzle.grid.every(column => 
+        column.every(tile => tile !== null)
+      );
+      console.log('All grid slots filled:', allFilled);
+      if (!allFilled) return;
+      
+      // Check if the order matches the solution
+      const placedOrder = puzzle.grid.flat().map(tile => tile!.id);
+      const isCorrect = JSON.stringify(placedOrder) === JSON.stringify(puzzle.solutionOrder);
+      
+      console.log('Grid placed order:', placedOrder);
+      console.log('Grid solution order:', puzzle.solutionOrder);
+      console.log('Grid is correct:', isCorrect);
+      
+      if (isCorrect) {
+        console.log('CONNECTED GRID PUZZLE COMPLETED! Setting isComplete to true');
         set({ isComplete: true });
       }
     } else {

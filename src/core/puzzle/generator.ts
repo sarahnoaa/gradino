@@ -49,7 +49,14 @@ export interface MultiColumnPuzzle {
   solutionOrder: string[]; // Combined solution order for all columns
 }
 
-export type Puzzle = SingleColumnPuzzle | ThreeAnchorPuzzle | MultiColumnPuzzle;
+export interface ConnectedGridPuzzle {
+  type: 'connected-grid';
+  grid: (Tile | null)[][]; // 3x4 grid: [column][row]
+  tiles: Tile[]; // All intermediate tiles mixed together
+  solutionOrder: string[]; // Combined solution order for all tiles
+}
+
+export type Puzzle = SingleColumnPuzzle | ThreeAnchorPuzzle | MultiColumnPuzzle | ConnectedGridPuzzle;
 
 // Generate a single column
 const generateColumn = (columnDef: { gradations: number; colors: [string, string] }, columnIndex: number): Column => {
@@ -208,7 +215,7 @@ export const generatePuzzle = (level: number): Puzzle => {
       tiles: shuffledTiles,
       solutionOrder
     };
-  } else {
+  } else if (definition.type === 'multi') {
     // Generate multi-column puzzle
     const columns: Column[] = definition.columns.map((colDef, index) => 
       generateColumn(colDef, index)
@@ -224,6 +231,120 @@ export const generatePuzzle = (level: number): Puzzle => {
     return {
       type: 'multi',
       columns,
+      tiles: shuffledTiles,
+      solutionOrder
+    };
+  } else if (definition.type === 'connected-grid') {
+    // Generate connected grid puzzle
+    const topLeftPrimary = getPrimaryById(definition.corners.topLeft as PrimaryId);
+    const topRightPrimary = getPrimaryById(definition.corners.topRight as PrimaryId);
+    const bottomLeftPrimary = getPrimaryById(definition.corners.bottomLeft as PrimaryId);
+    const bottomRightPrimary = getPrimaryById(definition.corners.bottomRight as PrimaryId);
+
+    if (!topLeftPrimary || !topRightPrimary || !bottomLeftPrimary || !bottomRightPrimary) {
+      throw new Error('Corner colors not found');
+    }
+
+    // Generate left column gradient (topLeft to bottomLeft)
+    const leftGradient = generateColorGradient(topLeftPrimary.rgb, bottomLeftPrimary.rgb, definition.leftGradations + 1);
+    
+    // Generate right column gradient (topRight to bottomRight)
+    const rightGradient = generateColorGradient(topRightPrimary.rgb, bottomRightPrimary.rgb, definition.rightGradations + 1);
+
+    // Generate top middle gradient (topLeft to topRight)
+    const topMiddleGradient = generateColorGradient(topLeftPrimary.rgb, topRightPrimary.rgb, 2); // Just 1 intermediate
+    
+    // Generate bottom middle gradient (bottomLeft to bottomRight)
+    const bottomMiddleGradient = generateColorGradient(bottomLeftPrimary.rgb, bottomRightPrimary.rgb, 2); // Just 1 intermediate
+
+    // Create corner tiles
+    const topLeftTile: Tile = {
+      id: 'top-left',
+      hex: topLeftPrimary.hex,
+      isAnchor: true,
+      label: topLeftPrimary.name
+    };
+
+    const topRightTile: Tile = {
+      id: 'top-right',
+      hex: topRightPrimary.hex,
+      isAnchor: true,
+      label: topRightPrimary.name
+    };
+
+    const bottomLeftTile: Tile = {
+      id: 'bottom-left',
+      hex: bottomLeftPrimary.hex,
+      isAnchor: true,
+      label: bottomLeftPrimary.name
+    };
+
+    const bottomRightTile: Tile = {
+      id: 'bottom-right',
+      hex: bottomRightPrimary.hex,
+      isAnchor: true,
+      label: bottomRightPrimary.name
+    };
+
+    // Create intermediate tiles
+    console.log('Left gradient (WB → WY):', leftGradient);
+    console.log('Right gradient (CB → CY):', rightGradient);
+    
+    const leftIntermediateTiles: Tile[] = leftGradient
+      .slice(1, -1) // Remove first and last (anchors)
+      .map((hex, index) => {
+        console.log(`Left intermediate ${index}: ${hex}`);
+        return {
+          id: `left-intermediate-${index}`,
+          hex,
+          isAnchor: false,
+          label: `Left Step ${index + 1}`
+        };
+      });
+
+    const rightIntermediateTiles: Tile[] = rightGradient
+      .slice(1, -1) // Remove first and last (anchors)
+      .map((hex, index) => {
+        console.log(`Right intermediate ${index}: ${hex}`);
+        return {
+          id: `right-intermediate-${index}`,
+          hex,
+          isAnchor: false,
+          label: `Right Step ${index + 1}`
+        };
+      });
+
+    const topMiddleTile: Tile = {
+      id: 'top-middle',
+      hex: topMiddleGradient[1], // The intermediate color
+      isAnchor: false,
+      label: 'Top Middle'
+    };
+
+    const bottomMiddleTile: Tile = {
+      id: 'bottom-middle',
+      hex: bottomMiddleGradient[1], // The intermediate color
+      isAnchor: false,
+      label: 'Bottom Middle'
+    };
+
+    // Combine only the intermediate tiles (not the middle tiles)
+    const allIntermediateTiles = [...leftIntermediateTiles, ...rightIntermediateTiles];
+    const shuffledTiles = [...allIntermediateTiles].sort(() => Math.random() - 0.5);
+
+    // Create 3x4 grid with middle tiles as fixed anchors
+    const grid: (Tile | null)[][] = [
+      [topLeftTile, null, null, bottomLeftTile], // Left column
+      [topMiddleTile, null, null, bottomMiddleTile], // Middle column (fixed)
+      [topRightTile, null, null, bottomRightTile] // Right column
+    ];
+
+    // Generate solution order by flattening the grid the same way completion check does
+    const solutionOrder = grid.flat().map(tile => tile ? tile.id : null);
+
+    return {
+      type: 'connected-grid',
+      grid,
       tiles: shuffledTiles,
       solutionOrder
     };

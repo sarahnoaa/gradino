@@ -19,7 +19,19 @@ export interface MultiColumnDefinition {
   }[];
 }
 
-export type PuzzleDefinition = SingleColumnDefinition | ThreeAnchorDefinition | MultiColumnDefinition;
+export interface ConnectedGridDefinition {
+  type: 'connected-grid';
+  corners: {
+    topLeft: string;
+    topRight: string;
+    bottomLeft: string;
+    bottomRight: string;
+  };
+  leftGradations: number; // intermediate tiles in left column
+  rightGradations: number; // intermediate tiles in right column
+}
+
+export type PuzzleDefinition = SingleColumnDefinition | ThreeAnchorDefinition | MultiColumnDefinition | ConnectedGridDefinition;
 
 export const PUZZLE_DEFINITIONS: Record<number, PuzzleDefinition> = {
   1: { type: 'single', gradations: 3, colors: ['CB', 'CY'] }, // Cool Blue → Cool Yellow (5 total: 3 intermediate + 2 anchors)
@@ -53,11 +65,15 @@ export const PUZZLE_DEFINITIONS: Record<number, PuzzleDefinition> = {
     bottomGradations: 2 // 2 intermediate tiles between CB and CR
   },
   11: { 
-    type: 'multi', 
-    columns: [
-      { gradations: 3, colors: ['CY', 'WR'] }, // Column 1: Cool Yellow → Warm Red (5 total: 3 intermediate + 2 anchors)
-      { gradations: 3, colors: ['WY', 'CR'] }  // Column 2: Warm Yellow → Cool Red (5 total: 3 intermediate + 2 anchors)
-    ]
+    type: 'connected-grid',
+    corners: {
+      topLeft: 'WB',    // Warm Blue
+      topRight: 'CB',   // Cool Blue
+      bottomLeft: 'WY', // Warm Yellow
+      bottomRight: 'CY' // Cool Yellow
+    },
+    leftGradations: 3,  // 3 intermediate tiles in left column (WB → WY)
+    rightGradations: 3  // 3 intermediate tiles in right column (CB → CY)
   },
   12: { 
     type: 'multi', 

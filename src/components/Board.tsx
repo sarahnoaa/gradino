@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { Slot } from './Slot';
+import { ConnectedGrid } from './ConnectedGrid';
 import { useGameStore } from '../core/state/gameStore';
 
 export const Board: React.FC = () => {
@@ -66,7 +67,10 @@ export const Board: React.FC = () => {
     return -1; // No empty slots
   };
 
-  if (currentPuzzle.type === 'single' || currentPuzzle.type === 'three-anchor') {
+  if (currentPuzzle.type === 'connected-grid') {
+    // Connected grid layout
+    return <ConnectedGrid />;
+  } else if (currentPuzzle.type === 'single' || currentPuzzle.type === 'three-anchor') {
     // Single column or three-anchor layout
     const column = placedTiles[0];
     if (!column) return null;

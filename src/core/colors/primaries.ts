@@ -18,3 +18,5 @@ export const getPrimaryById = (id: PrimaryId): PrimaryDef | undefined => {
 export const getPrimaryByHex = (hex: string): PrimaryDef | undefined => {
   return primaries.find(p => p.hex.toLowerCase() === hex.toLowerCase());
 };
+
+
