@@ -6,7 +6,6 @@ import { useGameStore } from '../core/state/gameStore';
 export const Board: React.FC = () => {
   const { currentPuzzle, placedTiles, placeTile, removeTile, isComplete } = useGameStore();
 
-
   if (!currentPuzzle) {
     return (
       <View style={styles.container}>
@@ -15,45 +14,103 @@ export const Board: React.FC = () => {
     );
   }
 
-  const handleSlotPress = (index: number) => {
-    const currentTile = placedTiles[index];
+  const handleSlotPress = (columnIndex: number, slotIndex: number) => {
+    const column = placedTiles[columnIndex];
+    if (!column) return;
+    
+    const currentTile = column[slotIndex];
     if (currentTile) {
       // Remove tile if there's one in the slot
-      removeTile(index);
+      removeTile(columnIndex, slotIndex);
     }
     // Note: We'll handle placing tiles from tray in the main screen
   };
 
-  // Find the next empty slot that should be filled (first empty slot after start anchor)
-  const getNextTargetSlot = () => {
-    for (let i = 1; i < placedTiles.length - 1; i++) { // Skip start and end anchors
-      if (placedTiles[i] === null) {
-        return i;
+  // Find the next empty slot that should be filled (prioritize Column 1, then Column 2)
+  const getNextTargetSlot = (columnIndex: number) => {
+    // First, check if Column 1 has any empty slots
+    const column1 = placedTiles[0];
+    if (column1) {
+      for (let i = 1; i < column1.length - 1; i++) { // Skip start and end anchors
+        if (column1[i] === null) {
+          // Column 1 has empty slots, so only glow Column 1
+          return columnIndex === 0 ? i : -1;
+        }
       }
     }
+    
+    // Column 1 is complete, now check Column 2
+    if (columnIndex === 1) {
+      const column2 = placedTiles[1];
+      if (column2) {
+        for (let i = 1; i < column2.length - 1; i++) { // Skip start and end anchors
+          if (column2[i] === null) {
+            return i;
+          }
+        }
+      }
+    }
+    
     return -1; // No empty slots
   };
 
-  const nextTargetSlot = getNextTargetSlot();
+  if (currentPuzzle.type === 'single') {
+    // Single column layout
+    const column = placedTiles[0];
+    if (!column) return null;
+    
+    const nextTargetSlot = getNextTargetSlot(0);
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.slotsContainer}>
-        {placedTiles.map((tile, index) => (
-          <Slot
-            key={index}
-            tile={tile}
-            index={index}
-            onPress={() => handleSlotPress(index)}
-            isAnchor={index === 0 || index === currentPuzzle.slots - 1}
-            isComplete={isComplete}
-            animationDelay={index * 100} // Stagger the animations
-            isNextTarget={index === nextTargetSlot}
-          />
-        ))}
+    return (
+      <View style={styles.container}>
+        <View style={styles.slotsContainer}>
+          {column.map((tile, index) => (
+            <Slot
+              key={index}
+              tile={tile}
+              index={index}
+              onPress={() => handleSlotPress(0, index)}
+              isAnchor={index === 0 || index === column.length - 1}
+              isComplete={isComplete}
+              animationDelay={index * 100} // Stagger the animations
+              isNextTarget={index === nextTargetSlot}
+            />
+          ))}
+        </View>
       </View>
-    </View>
-  );
+    );
+  } else {
+    // Multi-column layout
+    return (
+      <View style={styles.container}>
+        <View style={styles.multiColumnContainer}>
+          {currentPuzzle.columns.map((columnDef, columnIndex) => {
+            const column = placedTiles[columnIndex];
+            if (!column) return null;
+            
+            const nextTargetSlot = getNextTargetSlot(columnIndex);
+
+            return (
+              <View key={columnIndex} style={styles.column}>
+                {column.map((tile, slotIndex) => (
+                  <Slot
+                    key={`${columnIndex}-${slotIndex}`}
+                    tile={tile}
+                    index={slotIndex}
+                    onPress={() => handleSlotPress(columnIndex, slotIndex)}
+                    isAnchor={slotIndex === 0 || slotIndex === column.length - 1}
+                    isComplete={isComplete}
+                    animationDelay={(columnIndex * 100) + (slotIndex * 100)} // Stagger the animations
+                    isNextTarget={slotIndex === nextTargetSlot}
+                  />
+                ))}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    );
+  }
 };
 
 const styles = StyleSheet.create({
@@ -62,6 +119,14 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   slotsContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  multiColumnContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  column: {
     flexDirection: 'column',
     alignItems: 'center',
   },

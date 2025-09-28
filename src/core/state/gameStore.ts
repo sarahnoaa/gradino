@@ -4,7 +4,7 @@ import { TOTAL_LEVELS } from '../puzzle/levels';
 
 interface GameState {
   currentPuzzle: Puzzle | null;
-  placedTiles: (Tile | null)[];
+  placedTiles: (Tile | null)[][]; // Array of columns, each with placed tiles
   trayTiles: Tile[];
   isComplete: boolean;
   moves: number;
@@ -14,8 +14,8 @@ interface GameState {
   setPuzzle: (puzzle: Puzzle) => void;
   setLevel: (level: number) => void;
   nextLevel: () => void;
-  placeTile: (tile: Tile, slotIndex: number) => void;
-  removeTile: (slotIndex: number) => void;
+  placeTile: (tile: Tile, columnIndex: number, slotIndex: number) => void;
+  removeTile: (columnIndex: number, slotIndex: number) => void;
   checkCompletion: () => void;
   resetPuzzle: () => void;
 }
@@ -29,18 +29,38 @@ export const useGameStore = create<GameState>((set, get) => ({
   currentLevel: 1,
 
   setPuzzle: (puzzle: Puzzle) => {
-    const initialPlacedTiles = new Array(puzzle.slots).fill(null);
-    // Place anchors at start and end
-    initialPlacedTiles[0] = puzzle.anchors.start;
-    initialPlacedTiles[puzzle.slots - 1] = puzzle.anchors.end;
-    
-    set({
-      currentPuzzle: puzzle,
-      placedTiles: initialPlacedTiles,
-      trayTiles: [...puzzle.tiles],
-      isComplete: false,
-      moves: 0
-    });
+    if (puzzle.type === 'single') {
+      // Single column puzzle
+      const initialPlacedTiles = new Array(puzzle.slots).fill(null);
+      // Place anchors at start and end
+      initialPlacedTiles[0] = puzzle.anchors.start;
+      initialPlacedTiles[puzzle.slots - 1] = puzzle.anchors.end;
+      
+      set({
+        currentPuzzle: puzzle,
+        placedTiles: [initialPlacedTiles], // Single column in array
+        trayTiles: [...puzzle.tiles],
+        isComplete: false,
+        moves: 0
+      });
+    } else {
+      // Multi-column puzzle
+      const initialPlacedTiles = puzzle.columns.map(column => {
+        const columnTiles = new Array(column.slots).fill(null);
+        // Place anchors at start and end
+        columnTiles[0] = column.anchors.start;
+        columnTiles[column.slots - 1] = column.anchors.end;
+        return columnTiles;
+      });
+      
+      set({
+        currentPuzzle: puzzle,
+        placedTiles: initialPlacedTiles,
+        trayTiles: [...puzzle.tiles],
+        isComplete: false,
+        moves: 0
+      });
+    }
   },
 
   setLevel: (level: number) => {
@@ -72,23 +92,28 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
-  placeTile: (tile: Tile, slotIndex: number) => {
+  placeTile: (tile: Tile, columnIndex: number, slotIndex: number) => {
     const state = get();
     if (!state.currentPuzzle || state.isComplete) return;
     
+    const column = state.placedTiles[columnIndex];
+    if (!column) return;
+    
     // Can't place on anchor slots
-    if (slotIndex === 0 || slotIndex === state.currentPuzzle.slots - 1) return;
+    if (slotIndex === 0 || slotIndex === column.length - 1) return;
     
     const newPlacedTiles = [...state.placedTiles];
+    const newColumn = [...column];
     const newTrayTiles = [...state.trayTiles];
     
     // If there's already a tile in this slot, return it to tray
-    if (newPlacedTiles[slotIndex]) {
-      newTrayTiles.push(newPlacedTiles[slotIndex]!);
+    if (newColumn[slotIndex]) {
+      newTrayTiles.push(newColumn[slotIndex]!);
     }
     
     // Place the new tile
-    newPlacedTiles[slotIndex] = tile;
+    newColumn[slotIndex] = tile;
+    newPlacedTiles[columnIndex] = newColumn;
     
     // Remove from tray
     const tileIndex = newTrayTiles.findIndex(t => t.id === tile.id);
@@ -106,20 +131,25 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().checkCompletion();
   },
 
-  removeTile: (slotIndex: number) => {
+  removeTile: (columnIndex: number, slotIndex: number) => {
     const state = get();
     if (!state.currentPuzzle || state.isComplete) return;
     
-    // Can't remove anchor tiles
-    if (slotIndex === 0 || slotIndex === state.currentPuzzle.slots - 1) return;
+    const column = state.placedTiles[columnIndex];
+    if (!column) return;
     
-    const tile = state.placedTiles[slotIndex];
+    // Can't remove anchor tiles
+    if (slotIndex === 0 || slotIndex === column.length - 1) return;
+    
+    const tile = column[slotIndex];
     if (!tile) return;
     
     const newPlacedTiles = [...state.placedTiles];
+    const newColumn = [...column];
     const newTrayTiles = [...state.trayTiles];
     
-    newPlacedTiles[slotIndex] = null;
+    newColumn[slotIndex] = null;
+    newPlacedTiles[columnIndex] = newColumn;
     newTrayTiles.push(tile);
     
     set({
@@ -133,22 +163,56 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
     if (!state.currentPuzzle) return;
     
-    // Check if all slots are filled
-    const allFilled = state.placedTiles.every(tile => tile !== null);
-    console.log('All slots filled:', allFilled);
-    if (!allFilled) return;
-    
-    // Check if the order matches the solution
-    const placedOrder = state.placedTiles.map(tile => tile!.id);
-    const isCorrect = JSON.stringify(placedOrder) === JSON.stringify(state.currentPuzzle.solutionOrder);
-    
-    console.log('Placed order:', placedOrder);
-    console.log('Solution order:', state.currentPuzzle.solutionOrder);
-    console.log('Is correct:', isCorrect);
-    
-    if (isCorrect) {
-      console.log('PUZZLE COMPLETED! Setting isComplete to true');
-      set({ isComplete: true });
+    if (state.currentPuzzle.type === 'single') {
+      // Single column completion check
+      const column = state.placedTiles[0];
+      if (!column) return;
+      
+      // Check if all slots are filled
+      const allFilled = column.every(tile => tile !== null);
+      console.log('All slots filled:', allFilled);
+      if (!allFilled) return;
+      
+      // Check if the order matches the solution
+      const placedOrder = column.map(tile => tile!.id);
+      const isCorrect = JSON.stringify(placedOrder) === JSON.stringify(state.currentPuzzle.solutionOrder);
+      
+      console.log('Placed order:', placedOrder);
+      console.log('Solution order:', state.currentPuzzle.solutionOrder);
+      console.log('Is correct:', isCorrect);
+      
+      if (isCorrect) {
+        console.log('PUZZLE COMPLETED! Setting isComplete to true');
+        set({ isComplete: true });
+      }
+    } else {
+      // Multi-column completion check
+      const puzzle = state.currentPuzzle;
+      
+      // Check if all columns are complete
+      const allColumnsComplete = puzzle.columns.every((columnDef, columnIndex) => {
+        const column = state.placedTiles[columnIndex];
+        if (!column) return false;
+        
+        // Check if all slots in this column are filled
+        const allFilled = column.every(tile => tile !== null);
+        if (!allFilled) return false;
+        
+        // Check if the order matches the solution for this column
+        const placedOrder = column.map(tile => tile!.id);
+        const isCorrect = JSON.stringify(placedOrder) === JSON.stringify(columnDef.solutionOrder);
+        
+        console.log(`Column ${columnIndex} - Placed order:`, placedOrder);
+        console.log(`Column ${columnIndex} - Solution order:`, columnDef.solutionOrder);
+        console.log(`Column ${columnIndex} - Is correct:`, isCorrect);
+        
+        return isCorrect;
+      });
+      
+      if (allColumnsComplete) {
+        console.log('MULTI-COLUMN PUZZLE COMPLETED! Setting isComplete to true');
+        set({ isComplete: true });
+      }
     }
   },
 
@@ -156,15 +220,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const state = get();
     if (!state.currentPuzzle) return;
     
-    const initialPlacedTiles = new Array(state.currentPuzzle.slots).fill(null);
-    initialPlacedTiles[0] = state.currentPuzzle.anchors.start;
-    initialPlacedTiles[state.currentPuzzle.slots - 1] = state.currentPuzzle.anchors.end;
-    
-    set({
-      placedTiles: initialPlacedTiles,
-      trayTiles: [...state.currentPuzzle.tiles],
-      isComplete: false,
-      moves: 0
-    });
+    // Use the same logic as setPuzzle to reset
+    get().setPuzzle(state.currentPuzzle);
   }
 }));

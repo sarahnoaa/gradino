@@ -9,7 +9,7 @@ export interface Tile {
   label?: string;
 }
 
-export interface Puzzle {
+export interface Column {
   slots: number;
   anchors: {
     start: Tile;
@@ -19,36 +19,48 @@ export interface Puzzle {
   solutionOrder: string[];
 }
 
-// Generate a puzzle for a specific level
-export const generatePuzzle = (level: number): Puzzle => {
-  const definition = PUZZLE_DEFINITIONS[level];
-  if (!definition) {
-    throw new Error(`No puzzle definition found for level ${level}`);
-  }
+export interface SingleColumnPuzzle {
+  type: 'single';
+  slots: number;
+  anchors: {
+    start: Tile;
+    end: Tile;
+  };
+  tiles: Tile[];
+  solutionOrder: string[];
+}
 
-  const startPrimary = getPrimaryById(definition.colors[0] as PrimaryId);
-  const endPrimary = getPrimaryById(definition.colors[1] as PrimaryId);
-  
+export interface MultiColumnPuzzle {
+  type: 'multi';
+  columns: Column[];
+  tiles: Tile[]; // All tiles from all columns mixed together
+  solutionOrder: string[]; // Combined solution order for all columns
+}
+
+export type Puzzle = SingleColumnPuzzle | MultiColumnPuzzle;
+
+// Generate a single column
+const generateColumn = (columnDef: { gradations: number; colors: [string, string] }, columnIndex: number): Column => {
+  const startPrimary = getPrimaryById(columnDef.colors[0] as PrimaryId);
+  const endPrimary = getPrimaryById(columnDef.colors[1] as PrimaryId);
+
   if (!startPrimary || !endPrimary) {
     throw new Error('Primary colors not found');
   }
 
   // Generate perceptually uniform gradient using culori's OKLab interpolator
-  // We need gradations + 1 colors total (gradations intermediate + 2 anchors)
-  const gradient = generateColorGradient(startPrimary.rgb, endPrimary.rgb, definition.gradations + 1);
-  
-  console.log('Generated gradient:', gradient);
+  const gradient = generateColorGradient(startPrimary.rgb, endPrimary.rgb, columnDef.gradations + 1);
 
   // Create anchor tiles
   const startTile: Tile = {
-    id: 'start',
+    id: `col${columnIndex}-start`,
     hex: startPrimary.hex,
     isAnchor: true,
     label: startPrimary.name
   };
 
   const endTile: Tile = {
-    id: 'end',
+    id: `col${columnIndex}-end`,
     hex: endPrimary.hex,
     isAnchor: true,
     label: endPrimary.name
@@ -57,18 +69,12 @@ export const generatePuzzle = (level: number): Puzzle => {
   // Create intermediate tiles from gradient (skip first and last - those are anchors)
   const intermediateTiles: Tile[] = gradient
     .slice(1, -1) // Remove first and last (anchors)
-    .map((hex, index) => {
-      console.log(`Intermediate ${index}: ${hex}`);
-      return {
-        id: `intermediate-${index}`,
-        hex,
-        isAnchor: false,
-        label: `Step ${index + 1}`
-      };
-    });
-
-  // Shuffle the intermediate tiles for the tray
-  const shuffledTiles = [...intermediateTiles].sort(() => Math.random() - 0.5);
+    .map((hex, index) => ({
+      id: `col${columnIndex}-intermediate-${index}`,
+      hex,
+      isAnchor: false,
+      label: `Step ${index + 1}`
+    }));
 
   // Solution order: start, intermediate tiles in order, end
   const solutionOrder = [
@@ -78,14 +84,57 @@ export const generatePuzzle = (level: number): Puzzle => {
   ];
 
   return {
-    slots: definition.gradations + 2, // gradations + 2 anchors
+    slots: columnDef.gradations + 2, // gradations + 2 anchors
     anchors: {
       start: startTile,
       end: endTile
     },
-    tiles: shuffledTiles,
+    tiles: intermediateTiles,
     solutionOrder
   };
+};
+
+// Generate a puzzle for a specific level
+export const generatePuzzle = (level: number): Puzzle => {
+  const definition = PUZZLE_DEFINITIONS[level];
+  if (!definition) {
+    throw new Error(`No puzzle definition found for level ${level}`);
+  }
+
+  if (definition.type === 'single') {
+    // Generate single column puzzle
+    const column = generateColumn({ gradations: definition.gradations, colors: definition.colors }, 0);
+    
+    // Shuffle the intermediate tiles for the tray
+    const shuffledTiles = [...column.tiles].sort(() => Math.random() - 0.5);
+
+    return {
+      type: 'single',
+      slots: column.slots,
+      anchors: column.anchors,
+      tiles: shuffledTiles,
+      solutionOrder: column.solutionOrder
+    };
+  } else {
+    // Generate multi-column puzzle
+    const columns: Column[] = definition.columns.map((colDef, index) => 
+      generateColumn(colDef, index)
+    );
+
+    // Combine all intermediate tiles from all columns and shuffle them
+    const allTiles = columns.flatMap(col => col.tiles);
+    const shuffledTiles = [...allTiles].sort(() => Math.random() - 0.5);
+
+    // Combined solution order for all columns
+    const solutionOrder = columns.flatMap(col => col.solutionOrder);
+
+    return {
+      type: 'multi',
+      columns,
+      tiles: shuffledTiles,
+      solutionOrder
+    };
+  }
 };
 
 // Backward compatibility - generates level 1 puzzle

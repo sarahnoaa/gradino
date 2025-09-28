@@ -2,14 +2,14 @@
   {
     "id": "CB",
     "name": "Cool Blue",
-    "rgb": [0, 136, 255],
-    "hex": "#0088FF"
+    "rgb": [0, 101, 202],
+    "hex": "#0065ca"
   },
   {
     "id": "WB",
     "name": "Warm Blue",
-    "rgb": [2, 47, 153],
-    "hex": "#022F99"
+    "rgb": [28, 0, 238],
+    "hex": "#1c00ee"
   },
   {
     "id": "WR",

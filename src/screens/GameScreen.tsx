@@ -18,6 +18,9 @@ export const GameScreen: React.FC = () => {
     }
   }, [currentPuzzle, setLevel, currentLevel]);
 
+  // For testing Level 7, uncomment the line below:
+  useEffect(() => { setLevel(7); }, [setLevel]);
+
   useEffect(() => {
     console.log('GameScreen: isComplete changed to:', isComplete);
     if (isComplete) {
