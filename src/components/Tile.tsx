@@ -16,11 +16,6 @@ export const Tile: React.FC<TileProps> = ({ tile, onPress, style, interactive = 
       { backgroundColor: tile.hex },
       style
     ]}>
-      {tile.isAnchor && (
-        <View style={styles.anchorIndicator}>
-          <Text style={styles.anchorText}>★</Text>
-        </View>
-      )}
     </View>
   );
 
@@ -40,7 +35,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 8,
-    margin: 4,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -51,20 +45,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-  },
-  anchorIndicator: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  anchorText: {
-    fontSize: 12,
-    color: '#333',
   },
 });

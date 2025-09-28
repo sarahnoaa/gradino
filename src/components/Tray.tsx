@@ -19,7 +19,6 @@ export const Tray: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Available colors</Text>
       <View style={styles.tilesContainer}>
         {trayTiles.map((tile) => (
           <Tile
@@ -37,12 +36,6 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     padding: 20,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
   },
   tilesContainer: {
     flexDirection: 'row',

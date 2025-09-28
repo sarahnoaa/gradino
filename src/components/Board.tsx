@@ -26,7 +26,6 @@ export const Board: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Arrange the colors</Text>
       <View style={styles.slotsContainer}>
         {placedTiles.map((tile, index) => (
           <Slot
@@ -47,15 +46,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333',
-  },
   slotsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    flexDirection: 'column',
+    alignItems: 'center',
   },
 });

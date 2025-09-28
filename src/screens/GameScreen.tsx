@@ -42,7 +42,6 @@ export const GameScreen: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.gameTitle}>Gradino</Text>
-        <Text style={styles.movesText}>Moves: {moves}</Text>
       </View>
       
       <Board />

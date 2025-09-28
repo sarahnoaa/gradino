@@ -25,7 +25,6 @@ export const Slot: React.FC<SlotProps> = ({ tile, index, onPress, isAnchor }) =>
         <Tile tile={tile} interactive={false} />
       ) : (
         <View style={styles.emptySlotContent}>
-          {!isAnchor && <Text style={styles.slotNumber}>{index + 1}</Text>}
         </View>
       )}
     </TouchableOpacity>
@@ -34,30 +33,23 @@ export const Slot: React.FC<SlotProps> = ({ tile, index, onPress, isAnchor }) =>
 
 const styles = StyleSheet.create({
   slot: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    margin: 4,
+    width: 60,
+    height: 60,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#ddd',
+    borderStyle: 'dashed',
   },
   anchorSlot: {
-    borderColor: '#333',
-    borderWidth: 3,
+    borderWidth: 0, // No border for anchor slots
   },
   emptySlot: {
     backgroundColor: '#f5f5f5',
-    borderStyle: 'dashed',
   },
   emptySlotContent: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  slotNumber: {
-    fontSize: 16,
-    color: '#999',
-    fontWeight: 'bold',
   },
 });
