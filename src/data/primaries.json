@@ -1,0 +1,38 @@
+[
+  {
+    "id": "CB",
+    "name": "Cool Blue",
+    "rgb": [31, 98, 173],
+    "hex": "#1F62AD"
+  },
+  {
+    "id": "WB",
+    "name": "Warm Blue",
+    "rgb": [2, 47, 153],
+    "hex": "#022F99"
+  },
+  {
+    "id": "WR",
+    "name": "Warm Red",
+    "rgb": [230, 2, 6],
+    "hex": "#E60206"
+  },
+  {
+    "id": "CR",
+    "name": "Cool Red",
+    "rgb": [186, 7, 85],
+    "hex": "#BA0755"
+  },
+  {
+    "id": "WY",
+    "name": "Warm Yellow",
+    "rgb": [255, 188, 3],
+    "hex": "#FFBC03"
+  },
+  {
+    "id": "CY",
+    "name": "Cool Yellow",
+    "rgb": [255, 242, 3],
+    "hex": "#FFF203"
+  }
+]
