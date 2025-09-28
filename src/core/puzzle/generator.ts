@@ -30,6 +30,18 @@ export interface SingleColumnPuzzle {
   solutionOrder: string[];
 }
 
+export interface ThreeAnchorPuzzle {
+  type: 'three-anchor';
+  slots: number;
+  anchors: {
+    top: Tile;
+    middle: Tile;
+    bottom: Tile;
+  };
+  tiles: Tile[];
+  solutionOrder: string[];
+}
+
 export interface MultiColumnPuzzle {
   type: 'multi';
   columns: Column[];
@@ -37,7 +49,7 @@ export interface MultiColumnPuzzle {
   solutionOrder: string[]; // Combined solution order for all columns
 }
 
-export type Puzzle = SingleColumnPuzzle | MultiColumnPuzzle;
+export type Puzzle = SingleColumnPuzzle | ThreeAnchorPuzzle | MultiColumnPuzzle;
 
 // Generate a single column
 const generateColumn = (columnDef: { gradations: number; colors: [string, string] }, columnIndex: number): Column => {
@@ -114,6 +126,87 @@ export const generatePuzzle = (level: number): Puzzle => {
       anchors: column.anchors,
       tiles: shuffledTiles,
       solutionOrder: column.solutionOrder
+    };
+  } else if (definition.type === 'three-anchor') {
+    // Generate three-anchor puzzle
+    const topPrimary = getPrimaryById(definition.colors[0] as PrimaryId);
+    const middlePrimary = getPrimaryById(definition.colors[1] as PrimaryId);
+    const bottomPrimary = getPrimaryById(definition.colors[2] as PrimaryId);
+
+    if (!topPrimary || !middlePrimary || !bottomPrimary) {
+      throw new Error('Primary colors not found');
+    }
+
+    // Generate top gradient (top to middle)
+    const topGradient = generateColorGradient(topPrimary.rgb, middlePrimary.rgb, definition.topGradations + 1);
+    
+    // Generate bottom gradient (middle to bottom)
+    const bottomGradient = generateColorGradient(middlePrimary.rgb, bottomPrimary.rgb, definition.bottomGradations + 1);
+
+    // Create anchor tiles
+    const topTile: Tile = {
+      id: 'top',
+      hex: topPrimary.hex,
+      isAnchor: true,
+      label: topPrimary.name
+    };
+
+    const middleTile: Tile = {
+      id: 'middle',
+      hex: middlePrimary.hex,
+      isAnchor: true,
+      label: middlePrimary.name
+    };
+
+    const bottomTile: Tile = {
+      id: 'bottom',
+      hex: bottomPrimary.hex,
+      isAnchor: true,
+      label: bottomPrimary.name
+    };
+
+    // Create intermediate tiles from gradients (skip first and last - those are anchors)
+    const topIntermediateTiles: Tile[] = topGradient
+      .slice(1, -1) // Remove first and last (anchors)
+      .map((hex, index) => ({
+        id: `top-intermediate-${index}`,
+        hex,
+        isAnchor: false,
+        label: `Top Step ${index + 1}`
+      }));
+
+    const bottomIntermediateTiles: Tile[] = bottomGradient
+      .slice(1, -1) // Remove first and last (anchors)
+      .map((hex, index) => ({
+        id: `bottom-intermediate-${index}`,
+        hex,
+        isAnchor: false,
+        label: `Bottom Step ${index + 1}`
+      }));
+
+    // Combine all intermediate tiles
+    const allIntermediateTiles = [...topIntermediateTiles, ...bottomIntermediateTiles];
+    const shuffledTiles = [...allIntermediateTiles].sort(() => Math.random() - 0.5);
+
+    // Solution order: top, top intermediates, middle, bottom intermediates, bottom
+    const solutionOrder = [
+      topTile.id,
+      ...topIntermediateTiles.map(t => t.id),
+      middleTile.id,
+      ...bottomIntermediateTiles.map(t => t.id),
+      bottomTile.id
+    ];
+
+    return {
+      type: 'three-anchor',
+      slots: definition.topGradations + definition.bottomGradations + 3, // top + bottom + 3 anchors
+      anchors: {
+        top: topTile,
+        middle: middleTile,
+        bottom: bottomTile
+      },
+      tiles: shuffledTiles,
+      solutionOrder
     };
   } else {
     // Generate multi-column puzzle

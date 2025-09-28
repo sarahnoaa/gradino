@@ -4,6 +4,13 @@ export interface SingleColumnDefinition {
   colors: [string, string]; // [start, end] color IDs
 }
 
+export interface ThreeAnchorDefinition {
+  type: 'three-anchor';
+  colors: [string, string, string]; // [top, middle, bottom] color IDs
+  topGradations: number; // intermediate tiles between top and middle
+  bottomGradations: number; // intermediate tiles between middle and bottom
+}
+
 export interface MultiColumnDefinition {
   type: 'multi';
   columns: {
@@ -12,7 +19,7 @@ export interface MultiColumnDefinition {
   }[];
 }
 
-export type PuzzleDefinition = SingleColumnDefinition | MultiColumnDefinition;
+export type PuzzleDefinition = SingleColumnDefinition | ThreeAnchorDefinition | MultiColumnDefinition;
 
 export const PUZZLE_DEFINITIONS: Record<number, PuzzleDefinition> = {
   1: { type: 'single', gradations: 3, colors: ['CB', 'CY'] }, // Cool Blue → Cool Yellow (5 total: 3 intermediate + 2 anchors)
@@ -22,32 +29,28 @@ export const PUZZLE_DEFINITIONS: Record<number, PuzzleDefinition> = {
   5: { type: 'single', gradations: 5, colors: ['CR', 'WB'] }, // Cool Red → Warm Blue (7 total: 5 intermediate + 2 anchors)
   6: { type: 'single', gradations: 5, colors: ['WR', 'CB'] }, // Warm Red → Cool Blue (7 total: 5 intermediate + 2 anchors)
   7: { 
-    type: 'multi', 
-    columns: [
-      { gradations: 3, colors: ['CR', 'WB'] }, // Column 1: Cool Red → Warm Blue (5 total: 3 intermediate + 2 anchors)
-      { gradations: 3, colors: ['WR', 'CB'] }  // Column 2: Warm Red → Cool Blue (5 total: 3 intermediate + 2 anchors)
-    ]
+    type: 'three-anchor',
+    colors: ['CB', 'CY', 'WB'], // Cool Blue → Cool Yellow → Warm Blue
+    topGradations: 2, // 2 intermediate tiles between CB and CY
+    bottomGradations: 2 // 2 intermediate tiles between CY and WB
   },
   8: { 
-    type: 'multi', 
-    columns: [
-      { gradations: 3, colors: ['WY', 'WR'] }, // Column 1: Warm Yellow → Warm Red (5 total: 3 intermediate + 2 anchors)
-      { gradations: 3, colors: ['CY', 'CR'] }  // Column 2: Cool Yellow → Cool Red (5 total: 3 intermediate + 2 anchors)
-    ]
+    type: 'three-anchor',
+    colors: ['CB', 'WY', 'WB'], // Cool Blue → Warm Yellow → Warm Blue
+    topGradations: 2, // 2 intermediate tiles between CB and WY
+    bottomGradations: 2 // 2 intermediate tiles between WY and WB
   },
   9: { 
-    type: 'multi', 
-    columns: [
-      { gradations: 3, colors: ['CB', 'CY'] }, // Column 1: Cool Blue → Cool Yellow (5 total: 3 intermediate + 2 anchors)
-      { gradations: 3, colors: ['WB', 'WY'] }  // Column 2: Warm Blue → Warm Yellow (5 total: 3 intermediate + 2 anchors)
-    ]
+    type: 'three-anchor',
+    colors: ['WR', 'WB', 'CR'], // Warm Red → Warm Blue → Cool Red
+    topGradations: 2, // 2 intermediate tiles between WR and WB
+    bottomGradations: 2 // 2 intermediate tiles between WB and CR
   },
   10: { 
-    type: 'multi', 
-    columns: [
-      { gradations: 3, colors: ['WR', 'WB'] }, // Column 1: Warm Red → Warm Blue (5 total: 3 intermediate + 2 anchors)
-      { gradations: 3, colors: ['CR', 'CB'] }  // Column 2: Cool Red → Cool Blue (5 total: 3 intermediate + 2 anchors)
-    ]
+    type: 'three-anchor',
+    colors: ['WR', 'CB', 'CR'], // Warm Red → Cool Blue → Cool Red
+    topGradations: 2, // 2 intermediate tiles between WR and CB
+    bottomGradations: 2 // 2 intermediate tiles between CB and CR
   },
   11: { 
     type: 'multi', 

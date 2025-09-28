@@ -26,27 +26,39 @@ export const Board: React.FC = () => {
     // Note: We'll handle placing tiles from tray in the main screen
   };
 
-  // Find the next empty slot that should be filled (prioritize Column 1, then Column 2)
+  // Find the next empty slot that should be filled
   const getNextTargetSlot = (columnIndex: number) => {
-    // First, check if Column 1 has any empty slots
-    const column1 = placedTiles[0];
-    if (column1) {
-      for (let i = 1; i < column1.length - 1; i++) { // Skip start and end anchors
-        if (column1[i] === null) {
-          // Column 1 has empty slots, so only glow Column 1
-          return columnIndex === 0 ? i : -1;
+    if (currentPuzzle.type === 'multi') {
+      // Multi-column logic (prioritize Column 1, then Column 2)
+      const column1 = placedTiles[0];
+      if (column1) {
+        for (let i = 1; i < column1.length - 1; i++) { // Skip start and end anchors
+          if (column1[i] === null) {
+            // Column 1 has empty slots, so only glow Column 1
+            return columnIndex === 0 ? i : -1;
+          }
         }
       }
-    }
-    
-    // Column 1 is complete, now check Column 2
-    if (columnIndex === 1) {
-      const column2 = placedTiles[1];
-      if (column2) {
-        for (let i = 1; i < column2.length - 1; i++) { // Skip start and end anchors
-          if (column2[i] === null) {
-            return i;
+      
+      // Column 1 is complete, now check Column 2
+      if (columnIndex === 1) {
+        const column2 = placedTiles[1];
+        if (column2) {
+          for (let i = 1; i < column2.length - 1; i++) { // Skip start and end anchors
+            if (column2[i] === null) {
+              return i;
+            }
           }
+        }
+      }
+    } else {
+      // Single column or three-anchor logic
+      const column = placedTiles[columnIndex];
+      if (!column) return -1;
+      
+      for (let i = 1; i < column.length - 1; i++) { // Skip start and end anchors
+        if (column[i] === null) {
+          return i;
         }
       }
     }
@@ -54,8 +66,8 @@ export const Board: React.FC = () => {
     return -1; // No empty slots
   };
 
-  if (currentPuzzle.type === 'single') {
-    // Single column layout
+  if (currentPuzzle.type === 'single' || currentPuzzle.type === 'three-anchor') {
+    // Single column or three-anchor layout
     const column = placedTiles[0];
     if (!column) return null;
     
@@ -64,18 +76,27 @@ export const Board: React.FC = () => {
     return (
       <View style={styles.container}>
         <View style={styles.slotsContainer}>
-          {column.map((tile, index) => (
-            <Slot
-              key={index}
-              tile={tile}
-              index={index}
-              onPress={() => handleSlotPress(0, index)}
-              isAnchor={index === 0 || index === column.length - 1}
-              isComplete={isComplete}
-              animationDelay={index * 100} // Stagger the animations
-              isNextTarget={index === nextTargetSlot}
-            />
-          ))}
+          {column.map((tile, index) => {
+            let isAnchor = false;
+            if (currentPuzzle.type === 'single') {
+              isAnchor = index === 0 || index === column.length - 1;
+            } else if (currentPuzzle.type === 'three-anchor') {
+              isAnchor = index === 0 || index === 3 || index === column.length - 1; // top, middle, bottom
+            }
+            
+            return (
+              <Slot
+                key={index}
+                tile={tile}
+                index={index}
+                onPress={() => handleSlotPress(0, index)}
+                isAnchor={isAnchor}
+                isComplete={isComplete}
+                animationDelay={index * 100} // Stagger the animations
+                isNextTarget={index === nextTargetSlot}
+              />
+            );
+          })}
         </View>
       </View>
     );

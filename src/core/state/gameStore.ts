@@ -43,6 +43,21 @@ export const useGameStore = create<GameState>((set, get) => ({
         isComplete: false,
         moves: 0
       });
+    } else if (puzzle.type === 'three-anchor') {
+      // Three-anchor puzzle
+      const initialPlacedTiles = new Array(puzzle.slots).fill(null);
+      // Place anchors at top, middle, and bottom
+      initialPlacedTiles[0] = puzzle.anchors.top;
+      initialPlacedTiles[3] = puzzle.anchors.middle; // Middle anchor is at position 3 (after 2 top intermediates + 1 slot)
+      initialPlacedTiles[puzzle.slots - 1] = puzzle.anchors.bottom;
+      
+      set({
+        currentPuzzle: puzzle,
+        placedTiles: [initialPlacedTiles], // Single column in array
+        trayTiles: [...puzzle.tiles],
+        isComplete: false,
+        moves: 0
+      });
     } else {
       // Multi-column puzzle
       const initialPlacedTiles = puzzle.columns.map(column => {
@@ -183,6 +198,28 @@ export const useGameStore = create<GameState>((set, get) => ({
       
       if (isCorrect) {
         console.log('PUZZLE COMPLETED! Setting isComplete to true');
+        set({ isComplete: true });
+      }
+    } else if (state.currentPuzzle.type === 'three-anchor') {
+      // Three-anchor completion check
+      const column = state.placedTiles[0];
+      if (!column) return;
+      
+      // Check if all slots are filled
+      const allFilled = column.every(tile => tile !== null);
+      console.log('All slots filled:', allFilled);
+      if (!allFilled) return;
+      
+      // Check if the order matches the solution
+      const placedOrder = column.map(tile => tile!.id);
+      const isCorrect = JSON.stringify(placedOrder) === JSON.stringify(state.currentPuzzle.solutionOrder);
+      
+      console.log('Placed order:', placedOrder);
+      console.log('Solution order:', state.currentPuzzle.solutionOrder);
+      console.log('Is correct:', isCorrect);
+      
+      if (isCorrect) {
+        console.log('THREE-ANCHOR PUZZLE COMPLETED! Setting isComplete to true');
         set({ isComplete: true });
       }
     } else {
