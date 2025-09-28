@@ -10,15 +10,17 @@ interface SlotProps {
   isAnchor: boolean;
   isComplete?: boolean;
   animationDelay?: number;
+  isNextTarget?: boolean;
 }
 
-export const Slot: React.FC<SlotProps> = ({ tile, index, onPress, isAnchor, isComplete = false, animationDelay = 0 }) => {
+export const Slot: React.FC<SlotProps> = ({ tile, index, onPress, isAnchor, isComplete = false, animationDelay = 0, isNextTarget = false }) => {
   return (
     <TouchableOpacity
       style={[
         styles.slot,
         isAnchor && styles.anchorSlot,
-        !tile && !isAnchor && styles.emptySlot
+        !tile && !isAnchor && styles.emptySlot,
+        isNextTarget && styles.nextTargetSlot
       ]}
       onPress={onPress}
       activeOpacity={0.7}
@@ -58,5 +60,15 @@ const styles = StyleSheet.create({
   emptySlotContent: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  nextTargetSlot: {
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });

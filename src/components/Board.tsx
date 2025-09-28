@@ -24,6 +24,18 @@ export const Board: React.FC = () => {
     // Note: We'll handle placing tiles from tray in the main screen
   };
 
+  // Find the next empty slot that should be filled (first empty slot after start anchor)
+  const getNextTargetSlot = () => {
+    for (let i = 1; i < placedTiles.length - 1; i++) { // Skip start and end anchors
+      if (placedTiles[i] === null) {
+        return i;
+      }
+    }
+    return -1; // No empty slots
+  };
+
+  const nextTargetSlot = getNextTargetSlot();
+
   return (
     <View style={styles.container}>
       <View style={styles.slotsContainer}>
@@ -36,6 +48,7 @@ export const Board: React.FC = () => {
             isAnchor={index === 0 || index === currentPuzzle.slots - 1}
             isComplete={isComplete}
             animationDelay={index * 100} // Stagger the animations
+            isNextTarget={index === nextTargetSlot}
           />
         ))}
       </View>
