@@ -1,10 +1,9 @@
 import { getPrimaryById, PrimaryId } from '../colors/primaries';
-import { rgbToHsl, hslToHex, interpolateHsl } from '../colors/oklch';
+import { generateColorGradient } from '../colors/oklch';
 
 export interface Tile {
   id: string;
   hex: string;
-  hsl: { h: number; s: number; l: number };
   isAnchor: boolean;
   label?: string;
 }
@@ -28,16 +27,15 @@ export const generateFirstPuzzle = (): Puzzle => {
     throw new Error('Primary colors not found');
   }
 
-  // Convert to HSL
-  const startHsl = rgbToHsl(startPrimary.rgb);
-  const endHsl = rgbToHsl(endPrimary.rgb);
+  // Generate perceptually uniform gradient using culori's OKLab interpolator
+  const gradient = generateColorGradient(startPrimary.rgb, endPrimary.rgb, 4); // 4 steps gives us 5 colors total
   
+  console.log('Generated gradient:', gradient);
 
   // Create anchor tiles
   const startTile: Tile = {
     id: 'start',
     hex: startPrimary.hex,
-    hsl: startHsl,
     isAnchor: true,
     label: startPrimary.name
   };
@@ -45,22 +43,22 @@ export const generateFirstPuzzle = (): Puzzle => {
   const endTile: Tile = {
     id: 'end',
     hex: endPrimary.hex,
-    hsl: endHsl,
     isAnchor: true,
     label: endPrimary.name
   };
 
-  // Generate 3 intermediate colors (5 total - 2 anchors = 3 intermediate)
-  const intermediateHsl = interpolateHsl(startHsl, endHsl, 4); // 4 steps gives us 5 colors total
-  const intermediateTiles: Tile[] = intermediateHsl
+  // Create intermediate tiles from gradient (skip first and last - those are anchors)
+  const intermediateTiles: Tile[] = gradient
     .slice(1, -1) // Remove first and last (anchors)
-    .map((hsl, index) => ({
-      id: `intermediate-${index}`,
-      hex: hslToHex(hsl),
-      hsl,
-      isAnchor: false,
-      label: `Step ${index + 1}`
-    }));
+    .map((hex, index) => {
+      console.log(`Intermediate ${index}: ${hex}`);
+      return {
+        id: `intermediate-${index}`,
+        hex,
+        isAnchor: false,
+        label: `Step ${index + 1}`
+      };
+    });
 
   // Shuffle the intermediate tiles for the tray
   const shuffledTiles = [...intermediateTiles].sort(() => Math.random() - 0.5);
