@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Animated } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Board } from '../components/Board';
@@ -7,21 +7,16 @@ import { useGameStore } from '../core/state/gameStore';
 import { generateFirstPuzzle } from '../core/puzzle/generator';
 
 export const GameScreen: React.FC = () => {
-  const { currentPuzzle, setPuzzle, isComplete, moves } = useGameStore();
+  const { currentPuzzle, setLevel, isComplete, moves, currentLevel, nextLevel } = useGameStore();
   const [showNextButton, setShowNextButton] = useState(false);
-  const nextButtonOpacity = new Animated.Value(0);
+  const nextButtonOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Generate the first puzzle when the screen loads
+    // Load the current level when the screen loads
     if (!currentPuzzle) {
-      try {
-        const puzzle = generateFirstPuzzle();
-        setPuzzle(puzzle);
-      } catch (error) {
-        console.error('Error generating puzzle:', error);
-      }
+      setLevel(currentLevel);
     }
-  }, [currentPuzzle, setPuzzle]);
+  }, [currentPuzzle, setLevel, currentLevel]);
 
   useEffect(() => {
     console.log('GameScreen: isComplete changed to:', isComplete);
@@ -30,16 +25,20 @@ export const GameScreen: React.FC = () => {
       // Trigger haptic feedback immediately
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       
-      // Show next button after 2 seconds
+      // Show next button after 500ms
       setTimeout(() => {
+        console.log('GameScreen: Setting showNextButton to true');
         setShowNextButton(true);
         Animated.timing(nextButtonOpacity, {
           toValue: 1,
-          duration: 500,
+          duration: 300,
           useNativeDriver: true,
-        }).start();
-      }, 2000);
+        }).start(() => {
+          console.log('GameScreen: Button animation completed');
+        });
+      }, 500);
     } else {
+      console.log('GameScreen: Puzzle not complete, hiding button');
       setShowNextButton(false);
       nextButtonOpacity.setValue(0);
     }
@@ -53,18 +52,15 @@ export const GameScreen: React.FC = () => {
     );
   }
 
-  const handleNextPuzzle = () => {
-    // For now, just reset the current puzzle
-    // Later we can implement actual next puzzle logic
-    if (currentPuzzle) {
-      setPuzzle(currentPuzzle);
-    }
+  const handleNextLevel = () => {
+    nextLevel();
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.gameTitle}>Gradino</Text>
+        <Text style={styles.levelText}>Level {currentLevel}</Text>
       </View>
       
       <Board />
@@ -75,11 +71,12 @@ export const GameScreen: React.FC = () => {
       
       {showNextButton && (
         <Animated.View style={[styles.nextButtonContainer, { opacity: nextButtonOpacity }]}>
-          <TouchableOpacity style={styles.nextButton} onPress={handleNextPuzzle}>
-            <Text style={styles.nextButtonText}>Next Puzzle</Text>
+          <TouchableOpacity style={styles.nextButton} onPress={handleNextLevel}>
+            <Text style={styles.nextButtonText}>Next Level</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
+      {console.log('GameScreen: showNextButton =', showNextButton, 'isComplete =', isComplete)}
     </View>
   );
 };
@@ -101,6 +98,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+  },
+  levelText: {
+    fontSize: 16,
+    color: '#666',
   },
   movesText: {
     fontSize: 16,

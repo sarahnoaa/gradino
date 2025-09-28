@@ -1,5 +1,6 @@
 import { getPrimaryById, PrimaryId } from '../colors/primaries';
 import { generateColorGradient } from '../colors/oklch';
+import { PUZZLE_DEFINITIONS, PuzzleDefinition } from './levels';
 
 export interface Tile {
   id: string;
@@ -18,17 +19,23 @@ export interface Puzzle {
   solutionOrder: string[];
 }
 
-// Generate the first puzzle: Cool Blue → Cool Yellow with 5 total tiles (3 gradations)
-export const generateFirstPuzzle = (): Puzzle => {
-  const startPrimary = getPrimaryById('CB'); // Cool Blue
-  const endPrimary = getPrimaryById('CY'); // Cool Yellow
+// Generate a puzzle for a specific level
+export const generatePuzzle = (level: number): Puzzle => {
+  const definition = PUZZLE_DEFINITIONS[level];
+  if (!definition) {
+    throw new Error(`No puzzle definition found for level ${level}`);
+  }
+
+  const startPrimary = getPrimaryById(definition.colors[0] as PrimaryId);
+  const endPrimary = getPrimaryById(definition.colors[1] as PrimaryId);
   
   if (!startPrimary || !endPrimary) {
     throw new Error('Primary colors not found');
   }
 
   // Generate perceptually uniform gradient using culori's OKLab interpolator
-  const gradient = generateColorGradient(startPrimary.rgb, endPrimary.rgb, 4); // 4 steps gives us 5 colors total
+  // We need gradations + 1 colors total (gradations intermediate + 2 anchors)
+  const gradient = generateColorGradient(startPrimary.rgb, endPrimary.rgb, definition.gradations + 1);
   
   console.log('Generated gradient:', gradient);
 
@@ -71,7 +78,7 @@ export const generateFirstPuzzle = (): Puzzle => {
   ];
 
   return {
-    slots: 5,
+    slots: definition.gradations + 2, // gradations + 2 anchors
     anchors: {
       start: startTile,
       end: endTile
@@ -79,4 +86,9 @@ export const generateFirstPuzzle = (): Puzzle => {
     tiles: shuffledTiles,
     solutionOrder
   };
+};
+
+// Backward compatibility - generates level 1 puzzle
+export const generateFirstPuzzle = (): Puzzle => {
+  return generatePuzzle(1);
 };

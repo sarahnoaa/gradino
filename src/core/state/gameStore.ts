@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { Puzzle, Tile } from '../puzzle/generator';
+import { Puzzle, Tile, generatePuzzle } from '../puzzle/generator';
+import { TOTAL_LEVELS } from '../puzzle/levels';
 
 interface GameState {
   currentPuzzle: Puzzle | null;
@@ -7,9 +8,12 @@ interface GameState {
   trayTiles: Tile[];
   isComplete: boolean;
   moves: number;
+  currentLevel: number;
   
   // Actions
   setPuzzle: (puzzle: Puzzle) => void;
+  setLevel: (level: number) => void;
+  nextLevel: () => void;
   placeTile: (tile: Tile, slotIndex: number) => void;
   removeTile: (slotIndex: number) => void;
   checkCompletion: () => void;
@@ -22,6 +26,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   trayTiles: [],
   isComplete: false,
   moves: 0,
+  currentLevel: 1,
 
   setPuzzle: (puzzle: Puzzle) => {
     const initialPlacedTiles = new Array(puzzle.slots).fill(null);
@@ -36,6 +41,35 @@ export const useGameStore = create<GameState>((set, get) => ({
       isComplete: false,
       moves: 0
     });
+  },
+
+  setLevel: (level: number) => {
+    if (level < 1 || level > TOTAL_LEVELS) {
+      console.error(`Invalid level: ${level}. Must be between 1 and ${TOTAL_LEVELS}`);
+      return;
+    }
+    
+    try {
+      const puzzle = generatePuzzle(level);
+      get().setPuzzle(puzzle);
+      set({ currentLevel: level });
+    } catch (error) {
+      console.error('Error generating puzzle for level:', level, error);
+    }
+  },
+
+  nextLevel: () => {
+    const state = get();
+    const nextLevel = state.currentLevel + 1;
+    
+    if (nextLevel <= TOTAL_LEVELS) {
+      console.log(`Advancing to level ${nextLevel}`);
+      get().setLevel(nextLevel);
+    } else {
+      console.log('All levels completed!');
+      // Could show a completion screen or loop back to level 1
+      get().setLevel(1);
+    }
   },
 
   placeTile: (tile: Tile, slotIndex: number) => {
