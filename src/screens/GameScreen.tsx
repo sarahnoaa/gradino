@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, Text, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, Text, TouchableOpacity, Animated } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { Board } from '../components/Board';
 import { Tray } from '../components/Tray';
 import { useGameStore } from '../core/state/gameStore';
@@ -7,6 +8,8 @@ import { generateFirstPuzzle } from '../core/puzzle/generator';
 
 export const GameScreen: React.FC = () => {
   const { currentPuzzle, setPuzzle, isComplete, moves } = useGameStore();
+  const [showNextButton, setShowNextButton] = useState(false);
+  const nextButtonOpacity = new Animated.Value(0);
 
   useEffect(() => {
     // Generate the first puzzle when the screen loads
@@ -21,14 +24,26 @@ export const GameScreen: React.FC = () => {
   }, [currentPuzzle, setPuzzle]);
 
   useEffect(() => {
+    console.log('GameScreen: isComplete changed to:', isComplete);
     if (isComplete) {
-      Alert.alert(
-        'Congratulations!',
-        `You completed the puzzle in ${moves} moves!`,
-        [{ text: 'OK', onPress: () => {} }]
-      );
+      console.log('GameScreen: Puzzle completed! Triggering haptic and animations');
+      // Trigger haptic feedback immediately
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      
+      // Show next button after 2 seconds
+      setTimeout(() => {
+        setShowNextButton(true);
+        Animated.timing(nextButtonOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }).start();
+      }, 2000);
+    } else {
+      setShowNextButton(false);
+      nextButtonOpacity.setValue(0);
     }
-  }, [isComplete, moves]);
+  }, [isComplete]);
 
   if (!currentPuzzle) {
     return (
@@ -37,6 +52,14 @@ export const GameScreen: React.FC = () => {
       </View>
     );
   }
+
+  const handleNextPuzzle = () => {
+    // For now, just reset the current puzzle
+    // Later we can implement actual next puzzle logic
+    if (currentPuzzle) {
+      setPuzzle(currentPuzzle);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -50,10 +73,12 @@ export const GameScreen: React.FC = () => {
       
       <Tray />
       
-      {isComplete && (
-        <View style={styles.completionOverlay}>
-          <Text style={styles.completionText}>🎉 Puzzle Complete! 🎉</Text>
-        </View>
+      {showNextButton && (
+        <Animated.View style={[styles.nextButtonContainer, { opacity: nextButtonOpacity }]}>
+          <TouchableOpacity style={styles.nextButton} onPress={handleNextPuzzle}>
+            <Text style={styles.nextButtonText}>Next Puzzle</Text>
+          </TouchableOpacity>
+        </Animated.View>
       )}
     </View>
   );
@@ -86,20 +111,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#ddd',
     marginHorizontal: 20,
   },
-  completionOverlay: {
+  nextButtonContainer: {
     position: 'absolute',
-    top: 0,
+    bottom: 50,
     left: 0,
     right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
     alignItems: 'center',
   },
-  completionText: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  nextButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  nextButtonText: {
     color: 'white',
-    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

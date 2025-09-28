@@ -4,7 +4,7 @@ import { Slot } from './Slot';
 import { useGameStore } from '../core/state/gameStore';
 
 export const Board: React.FC = () => {
-  const { currentPuzzle, placedTiles, placeTile, removeTile } = useGameStore();
+  const { currentPuzzle, placedTiles, placeTile, removeTile, isComplete } = useGameStore();
 
 
   if (!currentPuzzle) {
@@ -34,6 +34,8 @@ export const Board: React.FC = () => {
             index={index}
             onPress={() => handleSlotPress(index)}
             isAnchor={index === 0 || index === currentPuzzle.slots - 1}
+            isComplete={isComplete}
+            animationDelay={index * 100} // Stagger the animations
           />
         ))}
       </View>

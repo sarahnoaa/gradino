@@ -8,9 +8,11 @@ interface SlotProps {
   index: number;
   onPress: () => void;
   isAnchor: boolean;
+  isComplete?: boolean;
+  animationDelay?: number;
 }
 
-export const Slot: React.FC<SlotProps> = ({ tile, index, onPress, isAnchor }) => {
+export const Slot: React.FC<SlotProps> = ({ tile, index, onPress, isAnchor, isComplete = false, animationDelay = 0 }) => {
   return (
     <TouchableOpacity
       style={[
@@ -22,7 +24,12 @@ export const Slot: React.FC<SlotProps> = ({ tile, index, onPress, isAnchor }) =>
       activeOpacity={0.7}
     >
       {tile ? (
-        <Tile tile={tile} interactive={false} />
+        <Tile 
+          tile={tile} 
+          interactive={false} 
+          isComplete={isComplete}
+          animationDelay={animationDelay}
+        />
       ) : (
         <View style={styles.emptySlotContent}>
         </View>

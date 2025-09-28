@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Tile as TileType } from '../core/puzzle/generator';
 
 interface TileProps {
@@ -7,16 +7,49 @@ interface TileProps {
   onPress?: () => void;
   style?: any;
   interactive?: boolean;
+  isComplete?: boolean;
+  animationDelay?: number;
 }
 
-export const Tile: React.FC<TileProps> = ({ tile, onPress, style, interactive = true }) => {
+export const Tile: React.FC<TileProps> = ({ tile, onPress, style, interactive = true, isComplete = false, animationDelay = 0 }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (isComplete) {
+      console.log(`Tile ${tile.id}: Starting pulse animation with delay ${animationDelay}ms`);
+      // Start pulse animation after delay
+      const timer = setTimeout(() => {
+        console.log(`Tile ${tile.id}: Starting pulse animation now`);
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.2,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }, animationDelay);
+
+      return () => clearTimeout(timer);
+    } else {
+      scaleAnim.setValue(1);
+    }
+  }, [isComplete, animationDelay]);
+
   const tileContent = (
-    <View style={[
+    <Animated.View style={[
       styles.tile,
       { backgroundColor: tile.hex },
-      style
+      style,
+      { 
+        transform: [{ scale: scaleAnim }],
+      }
     ]}>
-    </View>
+    </Animated.View>
   );
 
   if (interactive && onPress) {

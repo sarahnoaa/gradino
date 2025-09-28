@@ -101,13 +101,19 @@ export const useGameStore = create<GameState>((set, get) => ({
     
     // Check if all slots are filled
     const allFilled = state.placedTiles.every(tile => tile !== null);
+    console.log('All slots filled:', allFilled);
     if (!allFilled) return;
     
     // Check if the order matches the solution
     const placedOrder = state.placedTiles.map(tile => tile!.id);
     const isCorrect = JSON.stringify(placedOrder) === JSON.stringify(state.currentPuzzle.solutionOrder);
     
+    console.log('Placed order:', placedOrder);
+    console.log('Solution order:', state.currentPuzzle.solutionOrder);
+    console.log('Is correct:', isCorrect);
+    
     if (isCorrect) {
+      console.log('PUZZLE COMPLETED! Setting isComplete to true');
       set({ isComplete: true });
     }
   },
